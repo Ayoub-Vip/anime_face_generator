@@ -1,0 +1,86 @@
+\documentclass[twocolumn,superscriptaddress,aps]{revtex4-1}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{bbold}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{\Large{INFO8010: Anime Face Image generation }}
+\vspace{1cm}
+
+\author{\small{\bf Ayoub Assaoud}}
+\affiliation{\texttt{ayoub.assaoud@student.uliege.be} (\texttt{s207227})}
+
+\maketitle
+
+% ==============================================================================
+
+\section{Introduction}
+
+For this project I propose to build a generative deep learning system that can generate anime faces. The system will be trained on a dataset of anime faces and will use hierarchical  variational autoencoders as well as diffusion models to generate new faces. 
+The goal is to create a system that can generate  acceptable quality anime faces that are diverse and realistic by drawing samples, in the same time could be used for reverse problems like denoising by encoding-decoding the image. The project will also explore the use of different  architectures and techniques to improve the quality of the generated faces. 
+
+\section{Objectives}
+\begin{itemize}
+    \item drive a comparative study, to see which architecture is better for relatively small dataset like anime faces $(\le 100K $ images).
+    \item see the tradeoff between the reconstraction quality and the diversity of the generated faces (could use distangled $\beta-VAE$)
+    \item Implement a hierarchical Variational Autoencoder (MHVAE) and a diffusion model  for generating anime faces.
+    \item Explore and compare some different architectures for the $p_\phi (z|x)$ and $p_\theta (x|z)$: \textit{CNN, multi-head Transformer and MLP}.
+    \item (Nice-to-have) implement a user interface to allow users to generate anime faces by sampling from the latent space or denoising.
+\end{itemize} 
+
+\section{Data and Methodology}
+
+\subsection{Data}
+We will use the \href{https://www.kaggle.com/datasets/splcher/animefacedataset/}{\textbf{Anime Face Dataset}}, available at \url{https://www.kaggle.com/datasets/splcher/animefacedataset/}. This dataset has 63,632 "high-quality" anime faces with total size of $415.18 MB$.
+
+\subsection{Methodology}
+
+\subsubsection{Data Processing}
+\begin{itemize}
+    \item Preprocessing anime face images (resizing, normalization).
+    \item Augmenting the data to increase variability and robustness.
+    \item \textbf{Possibly} additional images from another data set\url{https://www.kaggle.com/datasets/soumikrakshit/anime-faces} could be used for training ($21K$ images).
+    % \item Splitting into training $(80\%)$, validation$(10\%)$, and testing$(10\%)$ sets.
+\end{itemize}
+
+\subsubsection{Model Architecture}
+We will explore and compare the following options:
+\begin{itemize}
+    \item \textbf{PRIMARY Option}: Hierarchical Variational Autoencoder (MHVAE) - A hierarchical VAE with multiple latent variables sizes (slightely decreasing), where $p_\phi (z|x)$ and $p_\theta (x|z)$ are Vision Transformers (ViT as used in first project session) or simple CNNs, that predicts gaussian distribution parameters $(\mu, \sigma)$.
+    \item \textbf{Option 2}: diffusion model using U-Net with ResNet blocks and self attention layer.
+    \item \textbf{Option 3 (optional)}: if results are satisfactory and time is enough, a score-based model will be implemented.
+\end{itemize}
+
+\subsubsection{Evaluation}
+\begin{itemize}
+    \item loss error is different for each model, for MHVAE we will use the ELBO loss, for diffusion model we will use the MSE loss
+    \item the error between $x$ and $\hat{x}$, is the mean squared error.
+    % \item 
+    % \item (Optional) Intersection over Union (IoU) if region detection is implemented.
+\end{itemize}
+
+\subsection{Infrastructure and Resources}
+Already have access to alan cluster.
+% \begin{itemize}
+%     \item \textbf{Hardware}: A GPU-enabled machine for faster model training and evaluation(already allocated).
+%     \item \textbf{Environm
+%     ent}: Google Colab Pro or a dedicated GPU server.
+
+%     \item \textbf{Libraries}: PyTorch for model implementation, and probably OpenCV for image processing (optional).
+% \end{itemize}
+
+% ==============================================================================
+
+% \bibliographystyle{unsrt}
+% \bibliography{bibliography.bib}
+
+\end{document}
