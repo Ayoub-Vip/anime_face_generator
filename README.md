@@ -47,12 +47,18 @@ diffusion model to generate anime faces.
     │
     ├── dataset.py              <- Scripts to download or generate data
     │
-    ├── features.py             <- Code to create features for modeling
-    │
-    ├── modeling                
+    ├── modeling                <- Contrains models, training and tuning code
+    |   |
     │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
+    │   ├── generate.py          <- Code for denoising or generating images with trained models          
+    │   ├── train.py            <- Code to train models
+    │   │
+    |   └── models              <- Contains models
+    |       ├── 10M-Dummy_Unet_DDPM
+    |       ├── 48M_Simple_Unet_DDPM
+    |       ├── 75M_Mega_Unet_DDPM
+    |       ├── 85M_Giga_Unet_edited_DDPM
+    |       └── 85M_Giga_Unet_Score_Based_EDM
     │
     └── plots.py                <- Code to create visualizations
 ```

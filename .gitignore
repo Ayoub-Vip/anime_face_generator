@@ -184,3 +184,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# CUSTOM
+*.pth
+notebooks/wandb/*

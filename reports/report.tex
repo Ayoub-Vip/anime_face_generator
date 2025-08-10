@@ -1,0 +1,143 @@
+% Instructions and evaluation guidelines
+% Students can work in groups of maximum 3 students.
+% Each group must write a short (1-2 pages) research project proposal. It should include a description of a minimum viable project, the data you will use or collect, the computing resources you think you will need, some nice-to-haves if time allows, and a short review of related work. Project proposals must be approved before working on the project.
+% Towards the end of the class, you will submit a project report (around 8 pages), in the format of a machine learning conference paper which has to include the following sections:
+
+%%% Introduction: which states the problem which has been tackled
+
+%%% Related Work: which covers research that is related to the considered problem
+
+%%% Methods: a clear and detailed description of the neural networks (architecture, training-parameters, loss function, data)
+
+%%% Results:
+   % qualitative analysis: could include examples of generated images, correct vs wrong predictions, ...
+   % quantitative analysis: general overview of final performance, loss curves, comparison table with error-bars, ...
+%%% Discussion: a critical discussion of the performance of the neural network, analysis of the potential limitations, tips for future work
+
+% The grade will depend on two main components:
+%%% quality and originality of the project (are the contributions of the group to the development of the project well defined? what has been implemented with respect to the original research questions, what has been re-used from existing coding directories?)
+%%% presentation of the project (structure of the report, clarity of figures/tables, correctness of the English language)
+
+% Both the project proposal and the project report should follow the LaTex template template-report.tex. Feel free to change the structure of the latex template if needed.
+% Honor code
+
+%% You may consult papers, books, online references, or publicly available implementations for ideas that you may want to adapt and incorporate into your project, so long as you clearly cite your sources in your code and your writeup. However, under no circumstances, may you base your project on someone else's implementation. One of the main learning outcomes of this project is indeed for you to gain experience in designing and implementing a deep learning system by yourself.
+
+% If you are combining your course project with the project from another class, you must receive permission from the instructors, and clearly explain in the proposal, final report the exact portion of the project that is being counted for INFO8010. In this case you must prepare separate reports for each course, and submit your final report for the other course as well.
+
+
+
+
+
+
+
+
+\subsection{Architecture}
+
+\subsubsection{CNN}
+Our CNN architecture is composed of four convolutional blocks, each consisting of a convolutional layer, batch normalization, ReLU activation, dropout, and max pooling. The number of channels increases in deeper layers (64, 128, 256, 512). After the convolutional feature extractor, the output is flattened and passed through two fully connected layers with dropout and ReLU, ending with a final classification layer. This design enables the model to extract hierarchical features from MRI images and perform robust classification. The architecture is implemented in the \texttt{CNNModel} class and is optimized for small medical datasets, with aggressive data augmentation to improve generalization.
+
+\subsubsection{ViT - Reference Book}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/vit_ref-diagram.png}
+    \caption{The vision Transformer architecture from reference book}
+    \label{fig:enter-label}
+\end{figure}
+The reference Vision Transformer (ViT) follows the standard design:
+\begin{itemize}
+      \item \textbf{Positional Encoding:} Since the Transformer architecture does not have any inherent notion of the order of the input sequence, positional encodings are added to the patch embeddings to provide information about the position of each patch in the original image.
+      \item \textbf{[CLS] Token:} A learnable \texttt{[CLS]} token is prepended to the sequence of patch embeddings. This token is used for classification tasks, and its final representation after processing through the Transformer blocks is used as the input to the classification head.
+      
+      The final shape: $(\#batches, \#patches, \#output\_channels)$
+      such that:
+      $\#patches =  \frac{img\_H}{patch\_H} \frac{img\_W}{patch\_W} + 1$
+      \item \textbf{Patch Embedding:} The input image is divided into non-overlapping patches, which are then linearly embedded into a sequence of vectors. This is done using the same convolutional layer, to prevent the model from making assemptions about the real order of patches even with data augmentation, the kernel size is equal to the patch size and stride is equal to the patch size, .
+      \item \textbf{Transformer Encoder Blocks:} The core of the ViT consists of sequence of Transformer encoder blocks, called  \textbf{ViTBlock}, each containing parallel Multi-Head Masked Self-Attention (MHMSA) and feed-forward neural network (MLP) layers.
+      
+      Residual connections and layer normalization are applied around each sub-layer.
+      \item \textbf{Classification Head:} The classification is performed using the output corresponding to the \texttt{[CLS]} token final representation. This implementation closely follows Dosovitskiy et al. (2021).
+\end{itemize}
+
+
+What was a bit confusing is the fact that reference book, did not mention the fact that the same linears $(W^Q, W^K, W^V)$ are used for all heads, which is not the case in the original paper \cite{dosovitskiy2020image}.
+
+Thus the next sections we will be based on the original paper.
+
+% \begin{equation}
+% \text{ViT}(X) = \text{ViTBlock}(\text{MLP}(\text{LayerNorm}(X + \text{MLP}(\text{LayerNorm}(X)))) + X)
+% \end{equation}
+
+\subsubsection{ViT - different $(W^Q_i, W^K_i, W^V_i)$ FCs for each head}
+This variant modifies the multi-head attention mechanism so that each attention head has its own set of projection weights for queries, keys, and values, instead of sharing weights across heads. This increases the representational capacity of the model and allows each head to learn distinct features.
+
+The rest of the architecture remains similar to the reference ViT, with patch embedding, positional encoding, and stacked Transformer blocks.
+
+\subsubsection{ViT - no cls}
+In this variant, the \texttt{[CLS]} token is removed. Instead, the model uses only the patch representations, and the output for classification is taken from the first patch token after the Transformer encoder. This approach tests the necessity and impact of the \texttt{[CLS]} token for image classification tasks, which was always of mysterious for AI begginers community, question from offical ggogle-research lab \href{https://github.com/google-research/vision_transformer/issues/61#issuecomment-802233921}{ Is the extra class embedding important to predict the results, why not simply use feature maps to predict?}
+
+\subsubsection{ViT - cls + MLP over Reps}
+To leverage information from all patches, this variant concatenates all token representations (including \texttt{[CLS]}) after the Transformer encoder and passes the resulting vector through a two-layer MLP for classification. This allows the model to aggregate information from the entire image, potentially capturing more global context than using only the \texttt{[CLS]} token.
+
+% /%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Architecture}
+
+\subsubsection{CNN}
+
+
+\subsubsection{ViT - Reference Book}
+
+\subsubsection{ViT - different $(W^Q_i, W^K_i, W^V_i)$ FCs for each head}
+This archuiteture will be used in the following ones
+
+\subsubsection{ViT - no cls}
+the additional 'token' $<cls>$ in this ViT was always of mysterious utility for AI community, Indeed it is 
+
+
+\subsubsection{ViT - cls + MLP over Reps}
+By taking only one representation to infer the class, we may loose some useful information, therefore we connected all representations to a MLP of two layers, first one 
+
+% basing the outpwe was curious about 
+
+
+
+\subsection{Training}
+\subsubsection{Parameters}
+
+\subsubsection{Loss Function}
+
+\section{Results}
+
+
+\section{Discussion and future improvements}
+the impact of cropping surounding black space: contrary to many other works,like in kaggle, the cropping increased the test accuracy by five points to hit 95% ...........
+
+like we found laterly, Althought the tremendous potential of Attenstion mechanisms, CNN remains competetive for relatively small datasets, as can be seen int the losses plot, CNN converges faster and achieves better results plateau of $......$, 
+the importance of cls couldn't be demonstarted in this problem. Indeed, that was a question that has been repeated many times as its role was not that obvious, see \href{https://github.com/google-research/vision_transformer/issues/61#issuecomment-802233921}{Git hub issues}
+
+
+
+% ==================== Ayoub Notes  ============================================
+
+% convolution layers in patch embedding is helps extracting local features/dependencies, which is suitable for our case, as cancer usualy located in one 
+% image preprocessing: The MRI images were preprocessed by cropping out the surrounding black space, ensuring that only the Region of Interest (ROI) is retained, which  reduces unnecessary background noise, and better resize :
+% torchvision.transforms.RandomResizedCrop is not used, to not accidently exclude cancerious regions, ((negative/positive) bias??) 
+
+
+% ViT is competetive for large datasets, but for small ones like the one we have, CNN converges faster and achieves 'better results' (accuracy $95.5\%$), even after data augmentation, Vit never hits the barre of $90\%$
+
+% here is the architecture tree that we have made:
+
+
+% it seems that the book 'dive into deep learning' untentionaly keept the same (W_Q, W_K, W_Q) FCs for all heads, instead of the architecture (Dosovitskiy et al., 2021) %to verify 
+
+
+% coversation: https://github.com/google-research/vision_transformer/issues/61#issuecomment-802233921
+%Question title: Is the extra class embedding important to predict the results, why not simply use feature maps to predict? #61
+
+% Different from the common ways to use feature maps to obtain classifcation prediction (with fc or GAP layers), VIT employs an extra class embedding to do this without using feature maps explicitly. Wonder the meanings of this unusual design?
+% BTW, I used official pre-training params to fine-tune VIT on a small dataset, found that the validation accuracy is a little better after I replaced the feature maps with leanable class embedding to predict. So is the class embedding (maybe like a kind of query within encoder) important to learn and to predict?
+
+% Lucas Beyer %%Great question. It is not really important. However, we wanted the model to be "exactly Transformer, but on image patches", so we kept this design from Transformer, where a token is always used.
