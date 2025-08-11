@@ -188,3 +188,4 @@ cython_debug/
 # CUSTOM
 *.pth
 notebooks/wandb/*
+wandb/*
