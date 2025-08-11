@@ -21,68 +21,26 @@
 
 \title{\Large{INFO8010: Brain Cancer Detection Project Report}}
 \vspace{1cm}
-\author{\small{\bf Hiba Qouiqa}}
-\affiliation{\texttt{hiba.qouiqa@student.uliege.be} (\texttt{s2304031})}
-\author{\small{\bf Ramzan Arsanov}}
-\affiliation{\texttt{r.arsanov@student.uliege.be} (\texttt{s194447})}
 \author{\small{\bf Ayoub Assaoud}}
 \affiliation{\texttt{ayoub.assaoud@student.uliege.be} (\texttt{s207227})}
 
 \maketitle
-% Towards the end of the class, you will submit a project report (around 8 pages), in the format of a machine learning conference paper which has to include the following sections:
-
-
-% The grade will depend on two main components:
-%%% quality and originality of the project (are the contributions of the group to the development of the project well defined? what has been implemented with respect to the original research questions, what has been re-used from existing coding directories?)
-%%% presentation of the project (structure of the report, clarity of figures/tables, correctness of the English language)
-
-% Both the project proposal and the project report should follow the LaTex template template-report.tex. Feel free to change the structure of the latex template if needed.
-% Honor code
-
-%% You may consult papers, books, online references, or publicly available implementations for ideas that you may want to adapt and incorporate into your project, so long as you clearly cite your sources in your code and your writeup. However, under no circumstances, may you base your project on someone else's implementation. One of the main learning outcomes of this project is indeed for you to gain experience in designing and implementing a deep learning system by yourself.
-% ==================== Ayoub Notes  ============================================
-
-% convolution layers in patch embedding is helps extracting local features/dependencies, which is suitable for our case, as cancer usualy located in one 
-% image preprocessing: The MRI images were preprocessed by cropping out the surrounding black space, ensuring that only the Region of Interest (ROI) is retained, which  reduces unnecessary background noise, and better resize :
-% torchvision.transforms.RandomResizedCrop is not used, to not accidently exclude cancerious regions, ((negative/positive) bias??) 
-
-
-% ViT is competetive for large datasets, but for small ones like the one we have, CNN converges faster and achieves 'better results' (accuracy $95.5\%$), even after data augmentation, Vit never hits the barre of $90\%$
-
-% here is the architecture tree that we have made:
-
-
-% it seems that the book 'dive into deep learning' untentionaly keept the same (W_Q, W_K, W_Q) FCs for all heads, instead of the architecture (Dosovitskiy et al., 2021) %to verify 
-
-
-
-% ==============================================================================
-
 \section{Abstract}
-In the context of our Deep Learning course and to apply and reinforce theoretical concepts, we selected the detection of brain cancer as our project topic. We explored and compared two state-of-the-art deep learning architectures a custom Convolutional Neural Network (CNN) and a Vision Transformer (ViT)—for automated classification of glioma, menin, and brain tumor MRI scans of the Bangladesh Brain Cancer MRI Dataset\,\cite{dataset}. of 6,056 scans. Our pipeline included .......
-This study not only reinforces practical understanding of deep learning techniques but also demonstrates their potential to support rapid, reliable brain tumor diagnosis in clinical settings.
-
-
 
 \section{Introduction}
 %%% Introduction: which states the problem which has been tackled
 
-We wanted to tackle the problem of detecting Brain cancers like gliomas, meningiomas, and tumors that can have serious consequences if they aren’t caught early, yet reading dozens of MRI scans by hand is both time-consuming and prone to variation between radiologists.
-
-That’s why we turned to convolutional neural networks and transformers—two powerful tools we’ve been studying—so we could build a system that learns directly from MRI images. Our goal was simple: compare a custom-built CNN with a ViT to see which architecture is best suited for this classification task.
+For this project we propose to build a generative deep learning system that can generate anime faces. The system will be trained on a dataset of anime faces and will use denoising diffusion probabilistic models (DDPM) to generate new faces. The goal is to create a system that can generate acceptable quality anime faces that are diverse and realistic by drawing samples, and naturally for denoising by encoding-decoding the image. The project will also explore the use of different architectures and techniques to improve the quality of the generated faces.
 
 Through this project, we:
 
 \begin{itemize}
-        \item Collected and preprocessed over 6,000 MRI scans, applying normalization, resizing, and various augmentations to make the data robust.
-        \item Designed and trained two distinct deep learning models, experimenting with ......
-        \item Evaluated performance using ....
+        \item Collecte and preprocess over than 80,000 anime face images, applying normalization, resizing, and few augmentations.
+        \item Design and train two distinct deep learning models, mainly noise prediction technique and have a quick view on score-based energy model, experimenting with different architectures and training strategies.
+        \item Evaluate performance using some basic metrics.
     \end{itemize}
-    
-In the following sections, we’ll walk through related work, our data pipeline, model details, and results.
 
-
-I think i will make a pipeline scheme and put it here !!!!
+In the following sections, we'll walk through related work, our data pipeline, model Architecture, and results.
 
 \section{Related Work}
 %%% Related Work: which covers research that is related to the considered problem
@@ -92,344 +50,157 @@ I think i will make a pipeline scheme and put it here !!!!
 %%% Methods: a clear and detailed description of the neural networks (architecture, training-parameters, loss function, data)
 \subsection{Data}
 \subsubsection{Dataset Description}
-We use the Bangladesh Brain Cancer MRI Dataset\textsuperscript{\hyperlink{ref1}{[1]}} is a comprehensive collection of MRI images categorized into three distinct classes:
-\begin{itemize}
-    \item Brain\_Glioma: 2004 images
-    \item Brain\_Menin: 2004 images
-    \item Brain\_Tumor: 2048 images
-    \end{itemize}
-The dataset includes a total of 6056 images, uniformly resized to 512x512 pixels. These images were collected from various hospitals across Bangladesh with the direct involvement of experienced medical professionals to ensure accuracy and relevance.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.5\textwidth]{figures/dataset_sample.png}
-    \caption{A sample of MRI images from the brain tumor dataset.}
-    \label{Figure 1: dataset}
-\end{figure}
-
-\subsubsection{Data Exploration:}
-Before going through preprocessing, we visualized the raw pixel‑intensity distributions for each tumor class and discovered a clear brightness bias: glioma images were generally darker, menin images intermediate, and tumor images noticeably brighter (Figure 2). This problem risks the model learning to guess classes solely and stupidly by overall brightness rather than meaningful anatomical patterns. To address this, we applied Contrast‑Limited Adaptive Histogram Equalization (CLAHE) to flatten large‑scale brightness differences while preserving local tissue to force the network to focus on true morphological features.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.45\textwidth]{figures/brightness-hist-mri-images.png}
-    \includegraphics[width=0.5\textwidth]{figures/brightness-after-CLAHE.png}
-    \caption{Brightness histograms for glioma (blue), menin (orange), and tumor (green) scans before and after contrast enhancement.}
-    \label{Figure 2: brightness bias}
-\end{figure}
-
+%TODO: some image samples
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.5\textwidth]{figures/dataset_sample.png}
+%     \caption{A sample of MRI images from the brain tumor dataset.}
+%     \label{Figure 1: dataset}
+% \end{figure}
 
 \subsubsection{Data Preprocessing}
-Our preprocessing pipeline was implemented in Python using OpenCV, TorchVision, and scikit-learn, and included the following steps:
+Our preprocessing pipeline was implemented in Python using PyTorch library, and included the following steps:
 
 \begin{itemize}
-    \item Contrast Enhancement (CLAHE): We applied Contrast Limited Adaptive Histogram Equalization (CLAHE) on grayscale MRI images to enhance local contrast and highlight tissue structures.
-    \item Foreground Cropping: we generated a binary mask to distinguish brain tissue from the background. We computed the bounding box of nonzero mask regions, cropped the image accordingly, and reduced background noise.
-    \item Resizing: images were resized to 256×256 pixels.
-    \item Normalization : Pixel intensities were scaled to the [0,1] range by dividing by 255.
-    \item Data Augmentation: To increase dataset diversity and reduce overfitting, we generated augmented tensors by applying horizontal flips, vertical flips, and rotations (90° and 270°) to each image, no translating was applied as the image is already cropped to the limit of ROI.
-    \item Dataset Splitting: The processed images were stacked on PyTorch tensors and split using train\_test\_split: 80\% for training, 10\% for validation, and 10\% for testing.
-    \item Saving Processed Images: Processed tensor images were saved as JPG files organized into train, val, and test directories by class labels.
+    \item \textbf{Normalization:} We normalize the pixel values to the range [-1, 1], to keep consistent with the noise distribution. an it seems to be much more effective than constraining the model to output values in the required range.
+    \item \textbf{Resizing:} All images were resized to a fixed size of 64x64 pixels.
+    \item \textbf{Data Augmentation:} We applied random horizontal flipping to increase dataset diversity, no rotation or cropping was applied because most faces were not centered, or touching the frame, which could lead to poor generated samples.
 \end{itemize}
-
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.5\textwidth]{figures/processing_pipeline.png}
-    \caption{Preprocessing pipeline}
-    \label{Figure 2:preprocess pipeline}
-\end{figure}
-
-% \subsubsection{Data Augmentation}
-% We applied different transformation
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Architecture}
+We use a denoising diffusion probabilistic model (DDPM) as the backbone of our generative system. The DDPM consists of a forward diffusion process that gradually adds gaussian noise to the data, and a reverse diffusion process that learns to denoise the data. This architecture allows for high-quality image generation by sampling from the learned distribution.
 
-\subsubsection{CNN}
+the same architecture can be used to approximate the score function of the data distribution $s_\theta(x , t) \approx \nabla \log p_t(x_t)$.
 
-Our CNN architecture is composed of four convolutional blocks, each consisting of a convolutional layer, batch normalization, ReLU activation, dropout, and max pooling. The number of channels increases in deeper layers (64, 128, 256, 512). After the convolutional feature extractor, the output is flattened and passed through two fully connected layers with dropout and ReLU, ending with a final classification layer. This design enables the model to extract hierarchical features from MRI images and perform robust classification. The architecture is implemented in the \texttt{CNNModel} class and is optimized for small medical datasets, with aggressive data augmentation to improve generalization.
+\subsubsection{Description}
 
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.5\textwidth]{figures/CNN.png}
-    \caption{Architecture of the CNN model.}
-    \label{Figure 3:CNN_Architecture}
-\end{figure}
-
-$fc\_dropout$ is used to prevent overfitting at dense layer, and the model is trained using the AdamW optimizer with a learning rate of $1e-4$. The batch size is set to 16, and the model is trained for 25 epochs.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{ViT - Reference Book}\label{section:basic-vit}
-
-The reference Vision Transformer (ViT) follows the standard design:
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.8\linewidth]{figures/vit_ref-diagram.png}
-    \caption{The vision Transformer architecture from reference book}
-    \label{fig:enter-label}
-\end{figure}
+We explore several variants of the DDPM architecture, including:
 
 \begin{itemize}
-      \item \textbf{Positional Encoding:} Since the Transformer architecture does not have any inherent notion of the order of the input sequence, positional encodings are added to the patch embeddings to provide information about the position of each patch in the original image.
-      \item \textbf{[CLS] Token:} A learnable \texttt{[CLS]} token is prepended to the sequence of patch embeddings. This token is used for classification tasks, and its final representation after processing through the Transformer blocks is used as the input to the classification head.
-      \item \textbf{Patch Embedding:} The input image is divided into non-overlapping patches, which are then linearly embedded into a sequence of vectors. This is done using the same convolutional layer, to prevent the model from making assemptions about the real order of patches even with data augmentation, the kernel size is equal to the patch size and stride is equal to the patch size.
-      The final shape: $$(\#batches, \#patches + 1, \#output\_channels)$$
-      with:
-      $\#patches =  \frac{img\_H}{patch\_H} \frac{img\_W}{patch\_W} + 1$
-      \item \textbf{Transformer Encoder Blocks:} The core of the ViT consists of sequence of Transformer encoder blocks, called  \textbf{ViTBlock}, each containing parallel Multi-Head Masked Self-Attention (MHMSA) and feed-forward neural network (MLP) layers.
-      
-      Residual connections and layer normalization are applied around each sub-layer.
-      \item \textbf{Classification Head:} The classification is performed using the output corresponding to the \texttt{[CLS]} token final representation. This implementation closely follows Dosovitskiy et al. (2021) \cite{dosovitskiy2020image}.
+    \item \textbf{U-Net Backbone:} A U-Net architecture is used as the denoiser model that predicts the original noise $\epsilon \approx\epsilon_\theta(x_t, t)$ for the DDPM.
+    \item \textbf{ResNet Blocks:} We incorporate residual blocks to improve the flow of gradients during training, which helps in learning complex features.
+    \item \textbf{Attention Mechanisms:} We incorporate attention mechanisms to improve the model's ability to focus on relevant features during the denoising process.
 \end{itemize}
 
-% \begin{equation}
-% \text{ViT}(X) = \text{ViTBlock}(\text{MLP}(\text{LayerNorm}(X + \text{MLP}(\text{LayerNorm}(X)))) + X)
-% \end{equation}
+The Unet architecture consists of Three main components: a chain of $down_channels$ \textbf{DownEncoder}, a chain of $mid_channels$ \textbf{Bottleneck}, and a chain of $down_channels$ \textbf{UpDecoder}, to preserve symmetric feature mapping.
 
+The DownEncoder reduces the spatial dimensions of the input image while increasing the number of feature channels, allowing the model to learn hierarchical representations.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{ViT - different FCs for each head}
+The Bottleneck connects the DownEncoder and UpDecoder, serving as a bridge that captures the most abstract features.
 
-What was a bit confusing is the fact that reference book, did not mention the fact that the same FCs projections $(W^Q, W^K, W^V)$ are used for all heads, which is not the case in the original paper \cite{dosovitskiy2020image}.
+The UpDecoder then reconstructs the image by progressively increasing the spatial dimensions while reducing the number of feature channels (Up sampling).
 
-Thus, we modified the structure of heads so that each attention $head_i$ has its own set of fully connected projection weights $(W^Q_i, W^K_i, W^V_i)$ for queries, keys, and values, instead of sharing weights across heads.
-
-This increases the representational capacity of the model and allows each head to learn distinct features. The rest of the architecture remains similar to the reference ViT, with patch embedding, positional encoding, and stacked Transformer blocks.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{ViT - no cls}
-the additional 'token' $<cls>$ in this ViT was subject to many discusions for AI community, its utility is indeed not that obvious.
-
-Thus we removed the \texttt{[CLS]} token. Instead, the model uses only the patch representations, and the output for classification is taken from the first patch token after the Transformer encoder.
-
-The approach aims to test the impact of the \texttt{[CLS]} token for our case, as well as exploring possible generalization.
-%  and to investigate whether the model can still achieve competitive performance without it.
-% In this ViT variant, we remove the \texttt{[CLS]} token entirely. Instead, the model relies only on the patch representations, using the first patch token's output for classification. This design tests whether the \texttt{[CLS]} token is essential for performance or if meaningful global information can be aggregated from patch tokens alone. Such an approach is sometimes used in literature to simplify the architecture or to encourage the model to focus on distributed representations across all patches. Our experiments aim to evaluate the impact of this modification on classification accuracy and generalization.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{ViT - cls + MLP over Reps}
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=.8\linewidth]{figures/mlp-over-reps.png}
-    \caption{The architecture of ViT with MLP over representations}
-    \label{fig:mlp-over-reps}
-\end{figure}
-
-To leverage information from all patches, this variant concatenates all token representations (including \texttt{[CLS]}) after the Transformer encoder and passes the resulting vector through a two-layer MLP for classification
- This allows the model to aggregate information from the entire image, potentially capturing more global context than using only the \texttt{[CLS]} token.
-
-By taking only one representation to infer the class, we may lose some useful information, therefore we connected all representations to a MLP of two layers, first one contains $num_hiddens$ neurons and the second one is the output layer with $num_classes$ neurons. the choice of the number of neurons in the first layer is arbitrary, but we found that it works well for our case.
-
-% basing the outpwe was curious about 
-
-
-\subsection{Training}
-\subsubsection{Parameters}
-
-
-% \begin{table}[ht]
-%   \centering
-%   \caption{Training parameters for each model.}
-%   \label{tab:best-configs}
-%   \begin{tabular}{|l|c|c|c|c|c|}
-%     \hline
-%     Model                & Epochs & Batch size & Loss fn                & \#Heads        & \#Blocks \\
-%     \hline
-%     Custom CNN           & 25     & 16         & CrossEntropyLoss       & –              & –         \\
-%     \hline
-%     ViT (CLS head)       & 25     & 16         & CrossEntropyLoss       & 8(default)     & 12(default) \\
-%     \hline
-%     ViT (no CLS head)    & 25     & 16         & CrossEntropyLoss       & 8(default)     & 12(default) \\
-%     \hline
-%     ViT (MLP over rep)   & 25     & 16         & CrossEntropyLoss       & 12             & 6        \\
-%     \hline
-%   \end{tabular}
-% \end{table}
-
-\begin{table}[ht]
-  \centering
-  \caption{Shared parameters between all models.}
-  \label{tab:common-hyperparams}
-  \begin{tabular}{|c|c|}
-    \hline
-    \textbf{Parameter}           & \textbf{Value}                                \\
-    \hline
-    Learning rate               & 1e-4                                           \\
-    Optimizer                   & AdamW                                          \\
-    Batch size                  & 16                                             \\
-    Image size                  & 256                                            \\
-    Loss function               & CrossEntropy                                   \\
-    Epochs                      & 25                                             \\
-    Patch size (ViT)            & 16                                             \\
-    \#hiddens    (ViT)          & 516                                            \\
-    MLP hidden dim              & 156                                            \\
-    Weights decay               & 1e-4                                           \\
-    Use bias                    & false                                          \\
-    FC\_Dropout                 & 0.3                                            \\
-    Dropout                     & 0.2                                            \\
-    Embedding Dropout                     & 0.2                                            \\
-    num\_classes                & 3                                              \\
-    \hline
-  \end{tabular}
-\end{table}
-
-
-% \begin{table}[ht]
-%   \centering
-%   \caption{Parameters used for each model.}
-%   \label{tab:model-hyperparams}
-%   \scriptsize
-%   \resizebox{\columnwidth}{!}{%
-%       \begin{tabular}{|l|c|c|c|c|}
-%         \hline
-%         \textbf{Parameter}             & \textbf{CNN}  & \textbf{ViT (CLS head)}  & \textbf{ViT (no CLS head)}  & \textbf{ViT (MLP over rep)} \\
-%         \hline
-%         Learning rate                  & 1e-4          & 1e-4                     & 1e-4                        & 1e-4                       \\
-%         Optimizer                      & AdamW         & AdamW                    & AdamW                       & AdamW                      \\
-%         Batch size                     & 16            & 16                       & 16                          & 16                         \\
-%         Image size                     & 256           & 256                      & 256                         & 256                        \\
-%         Loss function                  & CrossEntropy  & CrossEntropy             & CrossEntropy                & CrossEntropy               \\
-%         Epochs                         & 25            & 25                       & 25                          & 25                         \\
-%         Patch size                     & –             & 16                       & 16                          & 16                         \\
-%         \#hiddens                      & –             & 516                      & 516                         & 516                        \\
-%         \#heads                        & –             & 8                        & 8                           & 12                         \\
-%         MLP hidden dim                 & –             & 156                      & 156                         & 156                        \\
-%         \#Blocks                       & –             & 12                       & 12                          & 6                          \\
-%         Block dropout                  & 0.2           & 0.2                      & 0.2                         & 0.2                        \\
-%         Embedding dropout              & 0.2           & 0.2                      & 0.2                         & 0.2                        \\
-%         Weight decay                   & 1e-4          & 1e-4                     & 1e-4                        & 1e-4                       \\
-%         FC dropout                     & 0.3           & 0.3                      & 0.3                         & 0.3                        \\
-%         Use bias                       & false         & false                    & false                       & false                      \\
-%         \#Classes                      & 3             & 3                        & 3                           & 3                          \\
-%         \hline
-%       \end{tabular}%
-%       }
-% \end{table}
-\begin{table}[ht]
-  \centering
-  \caption{Parameters used for each model.}
-  \label{tab:model-hyperparams}
-  \scriptsize
-  \resizebox{\columnwidth}{!}{%
-      \begin{tabular}{|l|c|c|c|}
-        \hline
-        \textbf{Parameter}             & \textbf{ViT (CLS head)}  & \textbf{ViT (no CLS head)}  & \textbf{ViT (MLP over rep)} \\
-        \hline
-        \#heads                        & 8                        & 8                           & 12                         \\
-        \#Blocks                       & 12                       & 12                          & 6                          \\
-        \hline
-      \end{tabular}%
-      }
-\end{table}
-\subsubsection{Training Procedure}
-In order to get close to appropriate learning parameters, as well as some reasonable hyperparameters, we performed a grid search for the basic architecture in section \ref{section:basic-vit} over the following parameters:
-\begin{itemize}
-	\item Learning rate: $[0.0001, 0.0005, 0.0012]$
-	\item Batch size: $[16, 32]$
-	\item Epochs: 35
-	\item number of heads: $[4, 8, 12]$
-	\item number of blocks: $[6, 12]$
-	\item number of hidden: $[126, 516]$
-	\item Weight decay: $0.0001$
-	\item Dropout: $[0.2, 0.3, 0.4]$
-\end{itemize}
-then after some additional trials, we decided to use the parameters in the table \ref{tab:model-hyperparams}
-
-
-\subsubsection{Optimizer}
-We used the AdamW optimizer, which is an extension of the Adam optimizer with weight decay. AdamW helps to prevent overfitting by adding a weight decay term to the loss function, which encourages the model to learn simpler representations.
-
-the desicion to use AdamW was based on its effectiveness in training deep learning models, especially in the context of image classification tasks. It combines the benefits of adaptive learning rates and weight decay.
-
-we kept the default parameters for AdamW, which are:
-\begin{table}[h]
-    \centering
-    \begin{tabular}{|c|c|c|c|c|}
-        \hline
-        $\beta_1$ & $\beta_2$ & $\epsilon$ & weight decay & learning rate \\
-        \hline
-        0.9 & 0.999 & 1e-8 & 1e-4 & 1e-4 \\
-        \hline
-    \end{tabular}
-    \caption{Optimizer Parameters}
-    \label{tab:optimizer_params}
-\end{table}
-
-\subsubsection{Loss Function}
-the loss function used for training the models is the Cross-Entropy loss, which is commonly used for multi-class classification tasks. It measures the dissimilarity between the predicted class probabilities and the true class labels.
-The Cross-Entropy loss is defined as:
-\[
-L = - \sum_{i=1}^{N} \sum_{j=1}^{3} y_{i,j} \log(p_{i,j})
-\]
-$y_{i,j}$ is 1 if sample i belongs to class j, otherwise 0\\
-$p_{i,j}$ is the predicted probability for class j.
-
-thus even if the model predicts a probability of 0.8 for the correct class and 0.2 for the other classes, it will be penalized for this low confidence, but the loss will be low accordingly.
-
-
-\section{Results}
+Each of these subcomponents is composed of $\#ModelParams.num_(down\|mid\|up)_layers$ \textbf{block layers}, each of these block layers consists of a stack of $\#ModelParams.num_(down\|mid\|up)_layers$ ResNet block followed by a self-attention layer (optionnel in our case see discussion) and finally an optionnel convolutive layer (downsampling or upsampling), see figure bellow.
 
 \begin{figure*}[ht]
   \centering
-  \includegraphics[width=\textwidth]{figures/train-and-test-accuracies-averaged2.png}
-  \caption{Evolution of Training and validation accuracies for each model.}
-  \label{fig:train-val-acc}
+  \includegraphics[width=\textwidth]{figures/block_layer.png}
+  \caption{Block layer Architecture with ResNet blocks and self-attention layers.}
+  \label{fig:unet_architecture}
 \end{figure*}
 
-As can be seen in the figure \ref{fig:train-val-acc}, the CNN model outperforms the ViT models in terms of both training and validation accuracies, and converges faster. The CNN achieves a maximum accuracy of 95.5\% in both, before 25 epochs, while the ViT models reaches a maximum accuracy of around 90\% after 25 epochs.
+The ResNet block consists of two convolutional layers with Group normalization and SiLU activation, allowing the model to learn residual mappings, and the input is added to a \textbf{positional embedding learnable vector} after the first convolutional layer, whereas the self-attention layer allows the model to focus on relevant features in the input image, improving the quality of the generated images.
 
-the ViT models show a more gradual increase in accuracy, with the MLP over representations model achieving the highest validation accuracy of 90.5\% after epoch 35 (in other test), it was the slowest model, but confidently surpassing other ViT variante, which may indicate a room for improvement for larger datasets . The no CLS head model performs slightly worse, with a maximum validation accuracy of 89.5\%. The CLS head model achieves a maximum validation accuracy of 89\% at epoch 25.
+The DownEncoder uses strided convolutions to reduce the spatial dimensions, while the UpDecoder uses transposed convolutions to increase them. The Bottleneck uses standard convolutions without striding.
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Motivating choices}
+
+\textbf{the choice of activation function:} we choosed SiLU (Sigmoid Linear Unit) as the activation function for the model, which is known to improve the flow of gradients and enhance the model's ability to learn complex features. SiLU has been shown to outperform ReLU in many cases, especially in image-tasks.
+in other point of view, image pixels are normalized to the range [-1, 1], and the SiLU activation function is well-suited for this range, as it smoothly transitions between negative and positive values.
+
+\textbf{the choice of normalization:} we used Group Normalization instead of Batch Normalization, to normalize the features within groups, which is more effective in stabilizing training, especially that in our cases where batch size is set to 6 which is small because of reaching GPU Limit, it is also good for variable batch size while evaluation.
+
+\textbf{the choice of attention mechanism:} as modern architectures often incorporate attention mechanisms, we used self-attention layers to allow the model to focus on relevant features in the input image, improving the quality of the generated images. Self-attention helps the model capture long-range dependencies and relationships between pixels, which is crucial for generating high-quality images.
+
+this desicion has an impact, as we will soonly see, that there is a trade-off between an attention block for each block layer and the model's performance, as it increases the number of parameters, requires more data to train, sensible to noise, and increases the training time. 
+
+we will get a tour over the architecture we have tried in the order time we 
+% In our case, we found that using attention in the first two block layers of the DownEncoder and UpDecoder was sufficient to achieve good results without significantly increasing the model's complexity. 
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% as we progress through epochs, small models tend to overfit very fast, 10M and 49M reaches their best generation respectively 1 and 3 but still very low quality, then they tend to denoise images but very low generation quality, while larger models 74M and 85M tend to perform poorly in earlest epochs, and then  generate better quality images respectivly 7 and %TODO but require more data to train and are more sensitive to noise in later time steps.
+
+% we choosed to not consider the upsamplinf factor in the MSE $\frac{1}{2\sigma_t^2} \frac{(1 - \sigma_t)^2}{(1 - \hat \sigma_t) \sigma_t}$
+
+
+\subsubsection{Mini U-Net DDPM Architecture: 10M}
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \subsection{Training}
+% \subsubsection{Parameters}
+
+
+% \subsubsection{Training Procedure}
+
+% \subsubsection{Optimizer}
+% We used the AdamW optimizer, which is an extension of the Adam optimizer with weight decay. AdamW helps to prevent overfitting by adding a weight decay term to the loss function, which encourages the model to learn simpler representations.
+
+% the desicion to use AdamW was based on its effectiveness in training deep learning models, especially in the context of image classification tasks. It combines the benefits of adaptive learning rates and weight decay.
+
+% we kept the default parameters for AdamW, which are:
+% \begin{table}[h]
+%     \centering
+%     \begin{tabular}{|c|c|c|c|c|}
+%         \hline
+%         $\beta_1$ & $\beta_2$ & $\epsilon$ & weight decay & learning rate \\
+%         \hline
+%         0.9 & 0.999 & 1e-8 & 1e-4 & 1e-4 \\
+%         \hline
+%     \end{tabular}
+%     \caption{Optimizer Parameters}
+%     \label{tab:optimizer_params}
+% \end{table}
+
+% \subsubsection{Loss Function}
+% the loss function used for training the models is the Cross-Entropy loss, which is commonly used for multi-class classification tasks. It measures the dissimilarity between the predicted class probabilities and the true class labels.
+% The Cross-Entropy loss is defined as:
+% \[
+% L = - \sum_{i=1}^{N} \sum_{j=1}^{3} y_{i,j} \log(p_{i,j})
+% \]
+% $y_{i,j}$ is 1 if sample i belongs to class j, otherwise 0\\
+% $p_{i,j}$ is the predicted probability for class j.
+
+% thus even if the model predicts a probability of 0.8 for the correct class and 0.2 for the other classes, it will be penalized for this low confidence, but the loss will be low accordingly.
+
+
+% \section{Results}
 
 % \begin{figure*}[ht]
 %   \centering
-%   \includegraphics[width=\textwidth]{figures/train-and-test-losses-averaged.png}
-%   \caption{Evolution of Training and validation losses for each model.}
-%   \label{fig:train-val-loss}
+%   \includegraphics[width=\textwidth]{figures/train-and-test-accuracies-averaged2.png}
+%   \caption{Evolution of Training and validation accuracies for each model.}
+%   \label{fig:train-val-acc}
 % \end{figure*}
+
+% % \begin{figure*}[ht]
+% %   \centering
+% %   \includegraphics[width=\textwidth]{figures/train-and-test-losses-averaged.png}
+% %   \caption{Evolution of Training and validation losses for each model.}
+% %   \label{fig:train-val-loss}
+% % \end{figure*}
 
 
 \section{Discussion} %and future improvements
 
-\subsection{The failure of ViT models to beat CNN}
-
-like we found laterly, Althought the tremendous potential of Attenstion mechanisms, CNN remains competitive for relatively small datasets, as can be seen in the losses plot, CNN converges faster that ViT and achieves better accuracies.
-
-this can be due to the fact that the complexity of the problem is not that high, and the dataset that remains small against some starndard datasets (that can exceed 300 million images), thus, ViT transformer was not able to learn meaningful representations from all patches, or haven't enough training data to generalize, even with image augmentation. It also shows a more gradual increase in accuracy, with the MLP over representations model achieving the highest validation accuracy of 90.5\% after epoch 35 (in other test), so it was the slowest model, but confidently surpassing other ViT variantes, which may indicate a room for improvements on larger datasets .
-
-% the importance of cls couldn't be demonstarted in this problem. Indeed, that was a question that has been repeated many times as its role was not that obvious, see \href{https://github.com/google-research/vision_transformer/issues/61#issuecomment-802233921}{Git hub issues}
-\subsection{The importance of cls token}
-
-The question of the importance of cls token has been repeated many times as its role was not that obvious, a question from github repository from google-research titled "Is the extra class embedding important to predict the results, why not simply use feature maps to predict?", for more details see \href{https://github.com/google-research/vision_transformer/issues/61#issuecomment-802233921}{Google-search github issues}
-
-
-An answer to that quetion was from the belgian reasearcher Lucas Beyer from Google lab, has confirmed that it is not really important from the performance point of view, but it is important from the design point of view, as they wanted the model to be "exactly Transformer, but on image patches", so they kept this design from Transformer, where a token is always used. 
-
-Indeed, in our results, the model with no cls head performed almost in the same way, in terms of accurancy and learning speeed with the one with cls head.
+\subsection{The}
 
 \subsection{The importance of }
-We couldn't demonstrate the full potential of Vit - MLP over representations, in our case, as it  performed almost in the same way with the one with cls head, which was not not expected. This may be due to the fact that the dataset is relatively small or the complexity of the problem, and the model is not able to learn meaningful representations from all patches.
+
+
+\subsection{The importance of }
 
 
 \subsection{The importance of cropping images}
-the impact of cropping surounding black space: as many other works didn't considered cropping images, such as in kaggle, we found that this step increased the test accuracy by five points to hit $95.5\%$ for CNN as an example, which was exprected as the model was able to focus on the region of interest (ROI) and ignore the background noise. This is particularly important in medical imaging, where the ROI may be small compared to the overall image size, thus reducing unnecessary artifacts.
 
 \subsection{About possible improvements}
-% coversation: https://github.com/google-research/vision_transformer/issues/61#issuecomment-802233921
-%Question title: Is the extra class embedding important to predict the results, why not simply use feature maps to predict? #61
-
-% Different from the common ways to use feature maps to obtain classifcation prediction (with fc or GAP layers), VIT employs an extra class embedding to do this without using feature maps explicitly. Wonder the meanings of this unusual design?
-% BTW, I used official pre-training params to fine-tune VIT on a small dataset, found that the validation accuracy is a little better after I replaced the feature maps with leanable class embedding to predict. So is the class embedding (maybe like a kind of query within encoder) important to learn and to predict?
-
-% Lucas Beyer %%Great question. It is not really important. However, we wanted the model to be "exactly Transformer, but on image patches", so we kept this design from Transformer, where a token is always used.
-
 
 % ==============================================================================
 \newpage

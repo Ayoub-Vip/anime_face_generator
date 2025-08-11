@@ -24,7 +24,7 @@ import wandb
 ######################################################################
 @dataclass
 class ModelParams:
-    model_name: str = 'mega_unet_ddpm_85M'
+    model_name: str = 'Giga_unet_ddpm_85M'
     im_channels: int = 3
     im_size: tuple = (64, 64)  # Height, Width
     down_channels: list = (128, 256, 256, 512)
