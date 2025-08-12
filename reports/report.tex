@@ -114,61 +114,112 @@ in other point of view, image pixels are normalized to the range [-1, 1], and th
 
 \textbf{the choice of normalization:} we used Group Normalization instead of Batch Normalization, to normalize the features within groups, which is more effective in stabilizing training, especially that in our cases where batch size is set to 6 which is small because of reaching GPU Limit, it is also good for variable batch size while evaluation.
 
-\textbf{the choice of attention mechanism:} as modern architectures often incorporate attention mechanisms, we used self-attention layers to allow the model to focus on relevant features in the input image, improving the quality of the generated images. Self-attention helps the model capture long-range dependencies and relationships between pixels, which is crucial for generating high-quality images.
+\textbf{the choice of attention mechanism:} as modern architectures often incorporate attention mechanisms, we used self-attention layers to allow the model to focus on relevant features in the input image, improving the quality of the generated images. Self-attention helps the model to capture long-range dependencies and relationships between pixels, which is crucial for generating high-quality images.
 
-this desicion has an impact, as we will soonly see, that there is a trade-off between an attention block for each block layer and the model's performance, as it increases the number of parameters, requires more data to train, sensible to noise, and increases the training time. 
-
-we will get a tour over the architecture we have tried in the order time we 
-% In our case, we found that using attention in the first two block layers of the DownEncoder and UpDecoder was sufficient to achieve good results without significantly increasing the model's complexity. 
+this mechanism has an impact, as we will see in the cumming sections, that there is a trade-off between an attention block for each block layer and the model's performance, as it increases the number of parameters, requires more data to train, sensible to noise...
+% for remark, the impact of not having normalized data in the beginnd was poor sampling with dark images...
+we will get a tour over the architecture we have tried in the order time we
+% In our case, we found that using attention in the first two block layers of the DownEncoder and UpDecoder was sufficient to achieve good results without significantly increasing the model's complexity.
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % as we progress through epochs, small models tend to overfit very fast, 10M and 49M reaches their best generation respectively 1 and 3 but still very low quality, then they tend to denoise images but very low generation quality, while larger models 74M and 85M tend to perform poorly in earlest epochs, and then  generate better quality images respectivly 7 and %TODO but require more data to train and are more sensitive to noise in later time steps.
 
-% we choosed to not consider the upsamplinf factor in the MSE $\frac{1}{2\sigma_t^2} \frac{(1 - \sigma_t)^2}{(1 - \hat \sigma_t) \sigma_t}$
+%mode colapse, althourht 
 
+%LOSS FUNCTION we choosed to not consider the upsamplinf factor in the MSE $\frac{1}{2\sigma_t^2} \frac{(1 - \sigma_t)^2}{(1 - \hat \sigma_t) \sigma_t}$, our goal is not the maximum likelyhood estimation
 
-\subsubsection{Mini U-Net DDPM Architecture: 10M}
+% having a 
+% having the train and validation loss decreasing to very low valaues doies not mean that our generation quality would improve, in contrast, it leads to somtin g siomilar to data colapse in Hierachical VAEs, where the assumption on the distribution of latent variable is too constraining or when the chaining is too short.
 
+% as we can see with the giga model, as we progress in the training the quality improves, but in the Mega models we reach the best generation performence early between the 6th and 7th epochs, an then the quality is contiinously decreasing.
 
+% what we find surprising is the fact that the models with big capacities
+
+% we also a dded a clap for the loss, because we experienced some huge pics in score based model, as the random variable $\epsilon$ can vary unboundely to not breack the assumption of gaussian noise, thethe solution for that is to clip the values of loss error to a certain range.
+
+\subsubsection{Recaptilative Table:}
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+\hline
+\rotatebox{90}{\textbf{Model Name}} & \rotatebox{90}{\textbf{Params (M)}} & \rotatebox{70}{\textbf{Down Channels}} & \rotatebox{90}{\textbf{down Layers}} & \rotatebox{70}{\textbf{Mid Channels}} & \rotatebox{90}{\textbf{Mid Layers}} & \rotatebox{90}{\textbf{Dropout}} & \rotatebox{90}{\textbf{Attention}} & \rotatebox{90}{\textbf{Time Emb Dim}} \\
+\hline
+mini & 10 & [32,64,128,256] & 2 & [256,256,128] & 2 & 0 & Full & 128 \\
+Simple & 49 & [32,64,128,256,512] & 3 & [512,512,256] & 2 & 0 & Full & 128 \\
+Mega & 74 & [32,64,128,256,512] & 5 & [512,512,256] & 3 & 0.1 & Full & 128 \\
+Giga& 85 & [128,256,256,512] & 5 & [512,512,256] & 5 & 0.1 & Partial & 128 \\
+\hline
+\end{tabular}
+\caption{Model architecture parameters extracted from training runs.}
+\end{table}
+
+\subsubsection{Mini U-Net DDPM 10M Architecture:}
+\subsubsection{Simple U-Net DDPM 49M Architecture:}
+\subsubsection{Mega U-Net DDPM 74M Architecture:}
+
+\subsubsection{Giga U-Net DDPM 85M Architecture:}
+ then we decided that a transformer for each block layer may be not a good idea, as it requires too much data to train and more prone to noise, thus in Giga model, we apply the attention layer as follows:
+
+    % down_apply_attention: list = (False, True, False, True, True)
+    % mid_apply_attention: list = (False, True, False)
+    % up_apply_attention: list = (False, True, False, True, False)
+
+such that the first block layer does not contain an attention layer, to obtain some meaning full input for the transformer, our best-choice is inspired from GPT, BERT and modern Large laguages models that take as input a meaninfull semantic vecors from pretrained embedding (word2vec, FastText...), thus we do the same thing for images, as convolution-oriented layers-such ResNet- tend to extract meaningful features images which can be feed to our transformers.
+it also produces cleaner imagaes even in the first epochs, which is not the case with smaller models that contains full transfrom
+
+earlest epoches produce more diversity, and coherente faces which means that  
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% \subsection{Training}
-% \subsubsection{Parameters}
+\subsection{Training}
 
+Our training technique is based on standard denoising diffusion probabilistic models (DDPM) paper. we trained the model to predict the original noise $\epsilon$ given a noisy image $x_t$ and a time step $t$. The model learns to denoise the image by minimizing the Mean Squared Error (MSE) between the predicted noise and the true noise.
 
-% \subsubsection{Training Procedure}
+we draw a timestep from a uniform distribution between 0 and T=1000, for $\beta_t$ linearly increasing from $1e-4$ up to $$2e-2$$ a noise $\epsilon$ from normal distribution and a data point from dataset (in batches).
 
-% \subsubsection{Optimizer}
-% We used the AdamW optimizer, which is an extension of the Adam optimizer with weight decay. AdamW helps to prevent overfitting by adding a weight decay term to the loss function, which encourages the model to learn simpler representations.
+so linear schedule works quit good for these denoising models
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{figures/training-sampling-algo-ddpm.png}
+  \caption{training and sampling algorithm for DDPM.}
+  \label{fig:train-sampling-algo-ddpm}
+\end{figure*}
 
-% the desicion to use AdamW was based on its effectiveness in training deep learning models, especially in the context of image classification tasks. It combines the benefits of adaptive learning rates and weight decay.
+\subsubsection{Parameters}
+for learning rate, we trained on $1e-4$ for Mini and Simple, and $2e-4$ for Giga and Mega models.
 
-% we kept the default parameters for AdamW, which are:
-% \begin{table}[h]
-%     \centering
-%     \begin{tabular}{|c|c|c|c|c|}
-%         \hline
-%         $\beta_1$ & $\beta_2$ & $\epsilon$ & weight decay & learning rate \\
-%         \hline
-%         0.9 & 0.999 & 1e-8 & 1e-4 & 1e-4 \\
-%         \hline
-%     \end{tabular}
-%     \caption{Optimizer Parameters}
-%     \label{tab:optimizer_params}
-% \end{table}
+\subsubsection{Training Procedure}
 
-% \subsubsection{Loss Function}
-% the loss function used for training the models is the Cross-Entropy loss, which is commonly used for multi-class classification tasks. It measures the dissimilarity between the predicted class probabilities and the true class labels.
-% The Cross-Entropy loss is defined as:
-% \[
-% L = - \sum_{i=1}^{N} \sum_{j=1}^{3} y_{i,j} \log(p_{i,j})
-% \]
-% $y_{i,j}$ is 1 if sample i belongs to class j, otherwise 0\\
-% $p_{i,j}$ is the predicted probability for class j.
+\subsubsection{Optimizer}
+We used the AdamW optimizer, which is an extension of the Adam optimizer with weight decay. AdamW helps to prevent overfitting by adding a weight decay term to the loss function, which dampens oscillations and large gradients.
 
-% thus even if the model predicts a probability of 0.8 for the correct class and 0.2 for the other classes, it will be penalized for this low confidence, but the loss will be low accordingly.
+the desicion to use AdamW was based on its effectiveness in training deep learning models, especially in the context of image tasks. It combines the benefits of adaptive learning rates and weight decay.
+
+we kept the default parameters for AdamW, which are:
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        $\beta_1$ & $\beta_2$ & $\epsilon$ & weight decay & learning rate \\
+        \hline
+        0.9 & 0.999 & 1e-8 & 1e-4 & 1e-4 \\
+        \hline
+    \end{tabular}
+    \caption{Optimizer Parameters}
+    \label{tab:optimizer_params}
+\end{table}
+
+\subsubsection{Loss Function}
+the loss function used for training the models is Mean Squared Error. It measures the dissimilarity between the predicted noise and the true noise.
+The Mean Squared Error loss is defined as:
+\[
+\mathcal{L} = \mathbb{E}_{x \sim p(x), t \sim \mathcal{U}, \epsilon \sim \mathcal{N} } ||(\epsilon - \epsilon_\theta (x_t, t))||^2
+\]
+$y_{i}$ is the true noise for sample i, and $p_{i}$ is the predicted noise for sample i.\\
+$p_{i,j}$ is the predicted probability for class j.
+
+thus even if the model predicts a probability of 0.8 for the correct class and 0.2 for the other classes, it will be penalized for this low confidence, but the loss will be low accordingly.
 
 
 % \section{Results}
@@ -190,7 +241,6 @@ we will get a tour over the architecture we have tried in the order time we
 
 \section{Discussion} %and future improvements
 
-\subsection{The}
 
 \subsection{The importance of }
 
@@ -201,6 +251,16 @@ we will get a tour over the architecture we have tried in the order time we
 \subsection{The importance of cropping images}
 
 \subsection{About possible improvements}
+
+
+% ==============================================================================
+\subsection{The deceiving performance of Score-based Energy model}
+
+we followed the preconditioning and sampling strategy of the paper \cite{karras2022elucidating} to train a score-based energy model, which is a generative model that learns to approximate the score function of the data distribution. The model is trained to predict the score function at different noise levels, and it can generate samples by sampling from the learned distribution.
+
+we obsered very poor of ED, such that we observed some huge fletuations in the train losses that varies from 0.01 to more than 4000 , which indicates unstability 
+
+
 
 % ==============================================================================
 \newpage
