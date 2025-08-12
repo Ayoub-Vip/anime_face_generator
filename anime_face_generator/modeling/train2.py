@@ -22,6 +22,9 @@ def train_model(   module,
                    dataset,
                    device='cpu',
                    rand_gen=torch.Generator().manual_seed(42),
+                   model_backup=None,
+                   epoch_start=1,
+                   step_start=0,
                    wandb_logs=True):
     
     train_config = module.TrainConfig()
@@ -29,6 +32,8 @@ def train_model(   module,
     scheduler_config = module.SchedulerConfig()
     model = module.NoisePredictor()
     scheduler = module.LinearScheduleDiffuser() #if train_config.scheduler_type == 'linear' else module.CosineScheduler()
+    if model_backup is not None:
+        model.load_state_dict(torch.load(MODELS_DIR / model_backup, weights_only=True))
 
     train_dataset, val_dataset = tdata.random_split(
         dataset, [0.9, 0.1],
@@ -63,8 +68,8 @@ def train_model(   module,
 
     # Training Loop
     DATA_SIZE = len(train_loader.dataset)
-    epoch = 1   # start epoch
-    global_step = 0
+    epoch = epoch_start   # start epoch
+    global_step = step_start
 
     if wandb_logs:
         import wandb
@@ -181,7 +186,7 @@ def train_model(   module,
         print(f"Epoch {epoch} finished")
         # checkpoint
         if epoch % 1 == 0:
-            ckpt_name = f"{model_config.model_name}_ckpt_epoch_{epoch}.pth"
+            ckpt_name = f"{model_config.model_name}_ckpt_epoch_{epoch}_{time.strftime("%Y-%m-%d_%H-%M-%S")}.pth"
             path = MODELS_DIR / ckpt_name
             if isinstance(model, nn.DataParallel):
                 torch.save(model.module.state_dict(), path)
