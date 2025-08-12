@@ -508,12 +508,15 @@ class Unet(nn.Module):
         # Count the number of parameters
         num_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         return num_params
-    
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
     @torch.no_grad()
     def generate(self, shape=(1, 3, 64, 64)):
         x = torch.randn(shape).to(self.device)
         B = shape[0]    #batch size, number of samples to generate
-        # Generate samples by reversing the diffusion process
+
         for t_step in reversed(range(SchedulerConfig.T)):
             t = torch.full((B,), t_step, dtype=torch.long).to(x.device)
             pred_eps = self(x, t)
@@ -526,8 +529,8 @@ class Unet(nn.Module):
         samples = self.generate(shape=(num_samples, ModelParams.im_channels, *image_size))
         return samples
 
-    def load_parameters(self, state_dict):
-        self.load_state_dict(state_dict, weights_only=True)
+    def load_parameters(self, path):
+        self.load_state_dict(torch.load(path, weights_only=True))
 
 ######################################################################
 ######################### INTERFACES #################################

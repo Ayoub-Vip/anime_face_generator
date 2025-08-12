@@ -107,14 +107,14 @@ class LinearScheduleDiffuser(nn.Module):
         return sample
 
     def reverse(self, x, t, predicted_noise):
-        beta_t = self.beta[t]
-        one_by_sqrt_alpha_t = self.one_by_sqrt_alpha[t]
-        sqrt_one_minus_alpha_bar_t = self.sqrt_one_minus_alpha_bar[t]
+        beta_t = self.get_beta_t(t)
+        one_by_sqrt_alpha_t = self.one_by_sqrt_alpha[t].view(-1, 1, 1, 1)
+        sqrt_one_minus_alpha_bar_t = self.sqrt_one_minus_alpha_bar[t].view(-1, 1, 1, 1)
 
-        if t > 0:
-            z = torch.randn_like(x)
-        else:
-            z = torch.zeros_like(x)
+        
+        z = torch.zeros_like(x)
+        mask = t > 0
+        z[mask] = torch.randn_like(x)[mask]
 
         return (
             one_by_sqrt_alpha_t
@@ -495,15 +495,6 @@ class Unet(nn.Module):
         # out B x C x H x W
         return out
     
-    
-    # def q_sample(self, x0, t, noise=None): # add noise | forward pass | q(x_t | x_0)
-    # 	if noise is None:
-    # 		noise = torch.randn_like(x0).to(x0.device)
-
-    # 	sqrt_alpha_bar = alpha_bar[t].sqrt().view(-1, 1, 1, 1)
-    # 	sqrt_one_minus_alpha_bar = (1 - alpha_bar[t]).sqrt().view(-1, 1, 1, 1)
-        
-    # 	return sqrt_alpha_bar * x0 + sqrt_one_minus_alpha_bar * noise # <= x_t 
 
     def get_loss(self, x0, t=None):
         B = x0.shape[0]
@@ -519,6 +510,30 @@ class Unet(nn.Module):
         # Count the number of parameters
         num_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         return num_params
+    
+    @property
+    def device(self):
+        return next(self.parameters()).device
+    
+    @torch.no_grad()
+    def generate(self, shape=(1, 3, 64, 64)):
+        x = torch.randn(shape).to(self.device)
+        B = shape[0]    #batch size, number of samples to generate
+        
+        for t_step in reversed(range(SchedulerConfig.T)):
+            t = torch.full((B,), t_step, dtype=torch.long).to(x.device)
+            pred_eps = self(x, t)
+            x = self.diffuser.reverse(x, t, pred_eps)
+        return x
+    
+    @torch.no_grad()
+    def generate_samples(self, num_samples=48, image_size=ModelParams.im_size):
+        self.eval()
+        samples = self.generate(shape=(num_samples, ModelParams.im_channels, *image_size))
+        return samples
+
+    def load_parameters(self, path):
+        self.load_state_dict(torch.load(path, weights_only=True))
 
 ######################################################################
 ######################### INTERFACES #################################
