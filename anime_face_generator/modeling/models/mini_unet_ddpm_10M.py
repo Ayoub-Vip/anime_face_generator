@@ -105,14 +105,14 @@ class LinearScheduleDiffuser(nn.Module):
         return sample
 
     def reverse(self, x, t, predicted_noise):
-        beta_t = self.beta[t]
-        one_by_sqrt_alpha_t = self.one_by_sqrt_alpha[t]
-        sqrt_one_minus_alpha_bar_t = self.sqrt_one_minus_alpha_bar[t]
+        beta_t = self.get_beta_t(t)
+        one_by_sqrt_alpha_t = self.one_by_sqrt_alpha[t].view(-1, 1, 1, 1)
+        sqrt_one_minus_alpha_bar_t = self.sqrt_one_minus_alpha_bar[t].view(-1, 1, 1, 1)
 
-        if t > 0:
-            z = torch.randn_like(x)
-        else:
-            z = torch.zeros_like(x)
+        
+        z = torch.zeros_like(x)
+        mask = t > 0
+        z[mask] = torch.randn_like(x)[mask]
 
         return (
             one_by_sqrt_alpha_t

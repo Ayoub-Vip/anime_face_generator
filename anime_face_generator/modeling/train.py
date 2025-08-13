@@ -186,7 +186,7 @@ def train_model(   module,
         print(f"Epoch {epoch} finished")
         # checkpoint
         if epoch % 1 == 0:
-            ckpt_name = f"{model_config.model_name}_ckpt_epoch_{epoch}_{time.strftime("%Y-%m-%d_%H-%M-%S")}.pth"
+            ckpt_name = f"{model_config.model_name}_ckpt_epoch_{epoch}_{time.strftime('%Y-%m-%d_%H-%M-%S')}.pth"
             path = MODELS_DIR / ckpt_name
             if isinstance(model, nn.DataParallel):
                 torch.save(model.module.state_dict(), path)
