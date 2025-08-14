@@ -1,9 +1,9 @@
-PWD /home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/proposal
+PWD /home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/anime_face_generator/reports/proposal
 INPUT /etc/texmf/web2c/texmf.cnf
 INPUT /usr/share/texmf/web2c/texmf.cnf
 INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
 INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
-INPUT /home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/proposal/project2_proposal.tex
+INPUT /home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/anime_face_generator/reports/proposal/project2_proposal.tex
 OUTPUT project2_proposal.log
 INPUT /usr/share/texlive/texmf-dist/tex/latex/revtex4-1/revtex4-1.cls
 INPUT /usr/share/texlive/texmf-dist/tex/latex/revtex4-1/revtex4-1.cls

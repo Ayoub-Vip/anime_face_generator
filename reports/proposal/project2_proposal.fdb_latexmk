@@ -1,15 +1,15 @@
 # Fdb version 4
-["bibtex project2_proposal"] 1753880788.92661 "project2_proposal.aux" "project2_proposal.bbl" "project2_proposal" 1753886861.07641 0
-  "./project2_proposalNotes.bib" 1753886860.93572 103 48ad29797468f16e2853d8797278d7af ""
+["bibtex project2_proposal"] 1753880788.92661 "project2_proposal.aux" "project2_proposal.bbl" "project2_proposal" 1755100432.77019 0
+  "./project2_proposalNotes.bib" 1755100432.45984 103 48ad29797468f16e2853d8797278d7af ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/revtex4-1/apsrev4-1.bst" 1602107945 71515 e333383ed72bf24aa6de7e8cabb55f84 ""
-  "project2_proposal.aux" 1753886860.93472 1551 efc8c0019a6ce710ea08486a69272140 "pdflatex"
+  "project2_proposal.aux" 1755100432.45784 1551 efc8c0019a6ce710ea08486a69272140 "pdflatex"
   (generated)
   "project2_proposal.bbl"
   "project2_proposal.blg"
   (rewritten before read)
-["pdflatex"] 1753886860.61885 "/home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/proposal/project2_proposal.tex" "project2_proposal.pdf" "project2_proposal" 1753886861.07662 0
+["pdflatex"] 1755100431.76028 "/home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/anime_face_generator/reports/proposal/project2_proposal.tex" "project2_proposal.pdf" "project2_proposal" 1755100432.77065 0
   "/etc/texmf/web2c/texmf.cnf" 1746176737.85882 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/proposal/project2_proposal.tex" 1753886860.32672 4418 3325100be3b56e5d579ad8b49add3d92 ""
+  "/home/ayoub/Files/Quadrimesters/M2/Deep Learning/project2/anime_face_generator/reports/proposal/project2_proposal.tex" 1755100431.48284 4418 3325100be3b56e5d579ad8b49add3d92 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm1000.tfm" 1136768653 1536 e07581a4bb3136ece9eeb4c3ffab8233 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy5.tfm" 1246382020 1120 1e8878807317373affa7f7bba4cf2f6a ""
@@ -125,10 +125,10 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1747761387.01755 5312232 f3296911be9cc021788f3f879cf0a47d ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1746179424 6800798 1c953968b9d6ba39e18bc02d1b9f4607 ""
-  "project2_proposal.aux" 1753886860.93472 1551 efc8c0019a6ce710ea08486a69272140 "pdflatex"
-  "project2_proposal.bbl" 1753880788.96302 1981 2371da0eeaa9c49fd2eddf057334b8bb "bibtex project2_proposal"
-  "project2_proposal.out" 1753886860.93572 1395 1bae793f0e6a76743c554bd710e089e3 "pdflatex"
-  "project2_proposal.tex" 1753886860.32672 4418 3325100be3b56e5d579ad8b49add3d92 ""
+  "project2_proposal.aux" 1755100432.45784 1551 efc8c0019a6ce710ea08486a69272140 "pdflatex"
+  "project2_proposal.bbl" 1754931087.64288 1981 2371da0eeaa9c49fd2eddf057334b8bb "bibtex project2_proposal"
+  "project2_proposal.out" 1755100432.45984 1395 1bae793f0e6a76743c554bd710e089e3 "pdflatex"
+  "project2_proposal.tex" 1755100431.48284 4418 3325100be3b56e5d579ad8b49add3d92 ""
   (generated)
   "project2_proposal.aux"
   "project2_proposal.log"
