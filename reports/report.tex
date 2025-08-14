@@ -85,11 +85,11 @@ Our preprocessing pipeline was implemented in Python using PyTorch library, and 
 
 
 \subsubsection{Spliting Data:}\label{split_data}
-We split the dataset into training set and validation set, with a ratio of 90:10, althought this splitting is not strictly necessary for DDPMs, and not that significant than it could be for classification tasks, we still did it to monitor the training process and avoid overfitting, to have at least an idea about the model's denoising performance on unseen data.
+We split the dataset into training set and validation set, with a ratio of 90:10, althought this splitting is not strictly necessary for DDPMs, and not that significant than it could be for classification tasks, we still did it to have at least an idea about the model's denoising performance on unseen data.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Architecture}
-We use a denoising diffusion probabilistic model (DDPM) as the backbone of our generative system. The DDPM consists of a forward diffusion process that gradually adds gaussian noise to the data, and a reverse diffusion process that learns to denoise the data. This architecture allows for high-quality image generation by sampling from the a known distribution $q(x_T) \sim \mathcal{N}(0, I)$ then gradually denoising at each step with our model.
+The denoising diffusion probabilistic model (DDPM) consists of a forward diffusion process that progressively adds gaussian noise to the data, and a reverse diffusion process that learns to denoise the data. This architecture allows for high-quality image generation by sampling from the a known distribution $q(x_T) \sim \mathcal{N}(0, I)$ then gradually denoising at each step with our model.
 
 the same architecture can be used to approximate the score function of the data distribution $s_\theta(x , t) \approx \nabla \log p_t(x_t)$.
 
@@ -156,7 +156,7 @@ we will get a tour over the architecture we have tried in the order of their com
 It is important to mentionne that at the beginng, we took $[B, C_i, H*W]$ as the input shape for attention, and the stratigy to enhance performance was to increase the capacity by increasing stages of DownEncoder and UpDecoder, as well as the number of block layers in each subcomponent, but it was not effective, thus we changed the input shape to $[B, H*W, C_i]$ and we tried to increase the capacity by increasing the number of channels in DownEncoder and UpDecoder, as well as the number of block layers in each subcomponent.
 \begin{table}[ht]
 \centering
-    \begin{tabular}{|l|c|c|c|c|c|c|c|}
+    \begin{tabular}{|lc|cc|c|c|c|c|}
     \hline
         \rotatebox{90}{\textbf{Model Name}} & \rotatebox{90}{\textbf{Params (M)}} & \rotatebox{70}{\textbf{Down Channels}} & \rotatebox{90}{\textbf{Down Layers}} & \rotatebox{70}{\textbf{Mid Channels}} & \rotatebox{90}{\textbf{Mid Layers}} & \rotatebox{90}{\textbf{Attention}} & \rotatebox{90}{\textbf{Time Emb Size}} \\
         \hline
@@ -334,17 +334,15 @@ $$
 \subsubsection{Noise Scheduling:}
 we used a \textbf{linear scheduler} for the noise $\beta_t$, which is a common choice in DDPMs, as it allows for a smooth transition from low to high noise levels during training. This linear schedule helps the model to learn to denoise images effectively at different noise levels, and it has been shown to work well in practice, It was recommanded to use other strategies like cosine annealing specialy for small datasets, but we estimate that ours is sufficentely large.
 
-\begin{figure*}[H]
+\begin{figure}[H]
 	\centering
-	\includegraphics[width=7cm]{figures/training-sampling-algo-ddpm.png}
+	\includegraphics[width=0.45\textwidth]{figures/training-sampling-algo-ddpm.png}
 	\caption{training and sampling algorithm for DDPM.}
 	\label{fig:train-sampling-algo-ddpm}
-\end{figure*}
+\end{figure}
 
 \subsubsection{Parameters}
 for learning rate, we trained on $1e-4$ for Mini and Simple, and $2e-4$ for Giga and Mega models.
-
-\subsubsection{Training Procedure}
 
 \subsubsection{Optimizer}
 We used the AdamW optimizer, which is an extension of the Adam optimizer with weight decay. AdamW helps to prevent overfitting by adding a weight decay term to the loss function, which dampens oscillations and large gradients.
@@ -373,7 +371,6 @@ The Mean Squared Error loss is defined as:
 \]
 we choosed to not consider the upsampling factor in the MSE $\frac{1}{2\sigma_t^2} \frac{(1 - \sigma_t)^2}{(1 - \hat \sigma_t) \sigma_t}$, our goal is not the maximum likelyhood estimation but a better samples.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TRAIN/VAL PLOTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[ht]
 	\centering
@@ -391,6 +388,7 @@ we choosed to not consider the upsampling factor in the MSE $\frac{1}{2\sigma_t^
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Results}
+Please refer to appendices starting from \ref{tab:mini_10m_bad_attention} to better visualize the results.
 %TODO:   one plot (32 samples)for each 3 epochs for each model.
 
 
@@ -424,21 +422,18 @@ this issue is common for HVAEs, when the assumption on the distribution of laten
 \subsection{Self-Attention in Unet}
 Incorporating self-attention mechanisms into the U-Net architecture enhances its ability to capture long-range dependencies in the input data. This ability to attend to relevant features from distant pixels can be crucial for accurate predictions, and demonstrates the potential of self-attention in tasks requiring contextual understanding even for image generation.
 
-\subsection{Positional Embedding for Self-Attention}
-To further improve the performance of self-attention in our model, we can explore the use of additional positional embeddings suited for transformer as it wasn't directely imbedded. These embeddings provide the model with information about the relative positions of a set of pixels in the input sequence, which could be used for attention input of the shape $[B, C_i, H*W]$, to allow some subset of pixels attending each others, which is essential for maintaining the spatial structure of the data., instead of making relationships explicit using $[B, H*W, C_i]$.
+\subsection{Positional Embedding for Self-Attention $\&$ the shape of attention-input}
+A possible way to improve the performance of self-attention in our model, could be to explore the use of additional positional embeddings suited for transformer as it wasn't directely imbedded. These embeddings provide the model with information about the relative positions of a set of pixels in the input sequence, which could be used for attention input of the shape $[B, C_i, H*W]$, to allow some subset of pixels attending each others, which is essential for maintaining the spatial structure of the data., instead of making relationships explicit using $[B, H*W, C_i]$.
 
-\subsection{the shape of attention-input}
+\subsection{Larger and well structured models learn faster than smaller ones}
+As we saw with the shift from Mini 10M to Giga 85M that reached the same generation quality in half the time, thus larger models, due to their increased capacity, can learn more complex patterns and construct richer latent representations faster during training than smaller models, that may struggle to capture the same level of detail. in other word, the larger the model, the more freedom it has to learn complex patterns often without requiring highly precise parameter tuning, which leads to faster convergence and better generalization.
 
-\subsection{About possible improvements}
+This is impressive for our findings, as it suggests that investing in larger and more sophisticated but well structured models could yield significant improvements in generation quality faster than we thought. and many empirical results support this claim \cite{arora2019finegrained}.
+
+% \subsection{About possible improvements}
 %may be if we add a time embeding (positional encoding) specific to attention layers would be better?
 
 % ==============================================================================
-\subsection{The deceiving performance of Score-based Energy model}
-
-we followed the preconditioning and sampling strategy of the paper \cite{karras2022elucidating} to train a score-based energy model, which is a generative model that learns to approximate the score function of the data distribution. The model is trained to predict the score function at different noise levels, and it can generate samples by sampling from the learned distribution.
-
-we obsered very poor of ED, such that we observed some huge fletuations in the train losses that varies from 0.01 to more than 4000 , which indicates unstability
-
 
 
 % ==============================================================================
@@ -447,100 +442,235 @@ we obsered very poor of ED, such that we observed some huge fletuations in the t
 \bibliography{bibliography}
 % ==============================================================================
 
-\newpage
+\clearpage
 \appendix
-\section{Sampled Images for Mini 10M Architecture with bad attention input shape $[B, C_i, H*W]$}
+% \onecolumn
+% \twocolumn[\section*{Appendix}]
+\section{The deceptive performance of Score-based Energy model}
+We put it as appendix, because we observed very poor performance of the energy distance (ED), with huge fluctuations in the training losses varying from 0.01 to more than 6000, indicating computation instability, see the plot bellow.
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=.45\textwidth]{figures/10M_epoch 2.png}
-    \includegraphics[width=.45\textwidth]{figures/10M_epoch5_slightely diff_cains_bad_attention_.png}
-    \caption{Mini 10M epochs 2 and 5 (bad attention input shape).}
-    \label{fig:mini_10m_bad_attention_samples}
+\centering
+\includegraphics[width=0.5\textwidth]{figures/score-based-loss.png}
+\caption{Fluctuations in energy distance (ED) during training.}
+\label{fig:energy_distance_fluctuations}
 \end{figure}
+
+We attempted to train a score-based energy model following the preconditioning, sampling strategy as well as cosine Scheduling of the paper \cite{karras2022elucidating}, which is a generative model that learns to approximate the score function of the data distribution. The model is trained to predict the score function at different noise levels, and it can generate samples by sampling from the learned distribution.
+
+We also tried to use various steps when sampling, but the result was not satisfactory.
+
+$$
+    d\mathbf{x}_t = \left[ -\frac{1}{2} \beta(t) \nabla_{\mathbf{x}} \log p_t(\mathbf{x}) \right] dt + \sqrt{\beta(t)}\, d\mathbf{w}_t
+$$
+then we approximated this continuous SDE, using the Euler–Maruyama method with step size $\Delta t = 0.01$, in contrast to the paper that proposed higher order Runge-Kutta methods.
+$$
+    \mathbf{x}_{t - \Delta t} = \mathbf{x}_t + \beta(t) s_\theta(\mathbf{x}_t, t)\, \Delta t + \sqrt{2 \beta(t) \Delta t} \cdot \mathbf{z}, \quad \mathbf{z} \sim \mathcal{N}(0, \mathbf{I})
+$$
+
+Refer to the function $q\_sample$ in the notebook $notebooks/0.10-Visualize-samples.ipynb$, which implements the sampling strategy.
+
+\newpage
+Here is some samples generated by the model using the above sampling strategy.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/score-based-sampling.png}
+    \caption{Samples generated by the model using the proposed sampling strategy.}
+    \label{fig:sample_generated}
+\end{figure}
+
+we realise that either we misunderstood the paper, or at least we need to further investigate the training process and the model's architecture to achieve better results. However, we decided to keep our focus on the U-Net architecture and DDPM, as it seems to be more promising for our task.
+
+\newpage
+
+\section{Sampled Images for Mini 10M Architecture}
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=.32\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_1_epoch_1_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_3_epoch_3_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_6_epoch_6_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_9_epoch_9_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_12_epoch_12_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_15_epoch_15_samples.png}
-    \caption{Mini 10M epochs 1, 3, 6, 9, 12, and 15 (good attention input shape).}
-    \label{fig:mini_10m_good_attention_samples}
+\centering
+\begin{tabular}{c|c}
+Epoch & Sample Image \\
+\hline
+2 & \includegraphics[width=0.3\textwidth]{figures/10M_epoch 2.png} \\
+% \hline
+5 & \includegraphics[width=0.3\textwidth]{figures/10M_epoch5_slightely diff_cains_bad_attention_.png} 
+\end{tabular}
+\caption{Mini 10M epochs with bad attention input shape $[B, C_i, H*W]$.}
+\label{tab:mini_10m_bad_attention}
 \end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{c|c}
+Epoch & Sample Image \\
+\hline
+1 & \includegraphics[width=0.42\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_1_epoch_1_samples.png} \\
+% \hline
+3 & \includegraphics[width=0.42\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_3_epoch_3_samples.png} \\
+% \hline
+6 & \includegraphics[width=0.42\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_6_epoch_6_samples.png} \\
+% \hline
+9 & \includegraphics[width=0.42\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_9_epoch_9_samples.png} \\
+% \hline
+12 & \includegraphics[width=0.42\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_12_epoch_12_samples.png} \\
+% \hline
+15 & \includegraphics[width=0.42\textwidth]{figures/mini_unet_ddpm_10M_ckpt_epoch_15_epoch_15_samples.png} 
+\end{tabular}
+\caption{Mini 10M epochs with good attention input shape $[B, H*W, C_i]$}
+\label{tab:mini_10m_good_attention}
+\end{figure}
+
 
 \section{Sampled Images for Simple 49M Architecture}
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_1_2025-08-13_04-50-49_epoch_1_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_3_2025-08-13_10-10-46_epoch_3_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_5_2025-08-13_15-33-49_epoch_5_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_7_2025-08-13_20-54-54_epoch_7_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_8_2025-08-13_23-35-23_epoch_8_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_9_2025-08-14_02-15-01_epoch_9_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_10_2025-08-14_04-54-39_epoch_10_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_12_2025-08-14_10-13-47_epoch_12_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_13_2025-08-14_12-52-58_epoch_13_samples.png}
-    \caption{Simple 49M epochs 1, 3, 5, 7, 8, 9, 10, 12, and 13.}
-    \label{fig:simple_49m_samples}
+\centering
+\begin{tabular}{c|c}
+\rotatebox{90}{\textbf{Epoch}} & \textbf{Sample Image} \\
+\hline
+1 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_1_2025-08-13_04-50-49_epoch_1_samples.png} \\
+% \hline
+3 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_3_2025-08-13_10-10-46_epoch_3_samples.png} \\
+% \hline
+5 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_5_2025-08-13_15-33-49_epoch_5_samples.png} \\
+% \hline
+7 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_7_2025-08-13_20-54-54_epoch_7_samples.png} \\
+% \hline
+8 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_8_2025-08-13_23-35-23_epoch_8_samples.png} \\
+% \hline
+9 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_9_2025-08-14_02-15-01_epoch_9_samples.png} \\
+% \hline
+10 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_10_2025-08-14_04-54-39_epoch_10_samples.png} \\
+% \hline
+12 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_12_2025-08-14_10-13-47_epoch_12_samples.png} \\
+% \hline
+13 & \includegraphics[width=0.42\textwidth]{figures/simple_unet_ddpm_49M_ckpt_epoch_13_2025-08-14_12-52-58_epoch_13_samples.png} 
+\end{tabular}
+\caption{Simple 49M architecture samples, attention input shape $[B, H*W, C_i]$.}
+\label{tab:simple_49m}
 \end{figure}
 
-\section{Sampled Images for Mega 74M Architecture: input shape $[B, H*W, C_i]$}
+\section{Sampled Images for Mega 74M Architecture:}
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=.32\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_1_epoch_1_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_2_epoch_2_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_4_epoch_4_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_5_epoch_5_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/74M-badattention-epoch16.png}
-    \caption{Mega 74M epochs 1, 2, 4 and 5.}
-    \label{fig:mega_74m_samples}
+\centering
+\begin{tabular}{c|c}
+Epoch & Sample Image \\
+\hline
+1 & \includegraphics[width=0.42\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_1_epoch_1_samples.png} \\
+% \hline
+2 & \includegraphics[width=0.42\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_2_epoch_2_samples.png} \\
+% \hline
+4 & \includegraphics[width=0.42\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_4_epoch_4_samples.png} \\
+% \hline
+5 & \includegraphics[width=0.42\textwidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_5_epoch_5_samples.png} \\
+% \hline
+% 16 & \includegraphics[width=0.42\textwidth]{figures/74M-badattention-epoch16.png} 
+\end{tabular}
+\caption{Mega 74M architecture samples, attention input shape $[B, H*W, C_i]$.}
+\label{tab:mega_74m}
 \end{figure}
 
-\section{Sampled Images for Mega 74M Architecture: input shape $[B, H*W, C_i]$}
+\section{Sampled Images for Mega 74M Architecture}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 09-38-10.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 09-56-57.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 12-27-54.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 12-50-24.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 15-00-11.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 17-12-05.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 19-26-11.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 20-09-30.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 21-23-02.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 21-49-27.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-07 00-02-35.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-07 10-10-59.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-07 19-06-57.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 17-12-05.png}
-    \includegraphics[width=.32\textwidth]{figures/Screenshot from 2025-08-06 20-09-30.png}
-    \includegraphics[width=.32\textwidth]{figures/74M-badattention-epoch16.png}
-    \caption{Mega 74M epochs 1, 2, 4, 5, 6, 8, and 16.}
-    % \includegraphics[width=.32\textwidth]{}
     \label{fig:mega_74m_samples}
+    \renewcommand{\arraystretch}{1}
+    \setlength{\tabcolsep}{2pt}
+    \begin{tabular}{@{}p{0.8cm}|p{0.44\textwidth}@{}}
+        \textbf{Epoch} & \textbf{Sample Image} \\
+        \hline
+        1 & \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_1_epoch_1_samples.png} \\
+        2 & \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_2_epoch_2_samples.png} \\
+        4 & \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_4_epoch_4_samples.png} \\
+        5 & \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_74M_ckpt_epoch_5_epoch_5_samples.png} \\
+        % \hline
+    \end{tabular}
+    \caption{Mega 74M epochs 1, 2, 4 and 5, input shape $[B, H*W, C_i]$.}
 \end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \label{tab:mega_74m_samples}
+    \begin{tabular}{c|c}
+        % \hline
+        \textbf{Epoch} & \textbf{Sample Image} \\
+        \hline
+        1 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 09-38-10.png} \\
+        2 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 09-56-57.png} \\
+        4 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 12-27-54.png} \\
+        % 5 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 12-50-24.png} \\
+        6 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 15-00-11.png} \\
+        8 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 17-12-05.png} \\
+        10 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 19-26-11.png} \\
+        % 11 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-06 20-09-30.png} \\
+        12 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-07 00-02-35.png} \\
+        13 & \includegraphics[width=0.3\textwidth]{figures/Screenshot from 2025-08-07 10-10-59.png} \\
+        16 & \includegraphics[width=0.3\textwidth]{figures/74M-badattention-epoch16.png} \\
+        \hline
+    \end{tabular}
+    \caption{Mega 74M samples across epochs. Input shape: $[B, C_i, H \times W]$.}
+
+\end{figure}
+
 
 \section{Sampled Images for Giga 85M Architecture}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=.32\textwidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_1_epoch_1_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_3_with_16_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_4_epoch_4_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_5_with_16_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_7_epoch_7_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_9.png}
-    \includegraphics[width=.32\textwidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_10_epoch_10_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_13_epoch_13_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_16_epoch_16_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_17_with_16_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_19_epoch_19_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_20_epoch_20_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_22_epoch_22_samples.png}
-    \includegraphics[width=.32\textwidth]{figures/mega_unet_ddpm_85M_ckpt_epoch_19.png}
-    \includegraphics[width=.32\textwidth]{figures/mega_unet_ddpm_85M_ckpt_epoch_22_with_16_samples.png}
-    \caption{Giga 85M epochs 1, 3, 4, 5, 7, 9, 10, 13, 16, 17, 19, 20, 22.}
-    \label{fig:giga_85m_samples}
+    \caption{Giga 85M samples across selected epochs.}
+    \label{tab:giga_85m_samples}
+    \renewcommand{\arraystretch}{1} % Reduce row height
+    \setlength{\tabcolsep}{2pt}     % Reduce column padding
+    \begin{tabular}{@{}p{.3cm}|p{0.41\textwidth}@{}} % Tight Epoch column
+        \rotatebox{90}{\textbf{Epoch}} & \textbf{Sample Image} \\
+        \hline
+        1 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_1_epoch_1_samples.png} \\
+        4 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_4_epoch_4_samples.png} \\
+        5 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_5_with_16_samples.png} \\
+        7 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_7_epoch_7_samples.png} \\
+        9 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_9.png} \\
+        10 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_10_epoch_10_samples.png} \\
+        13 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_13_epoch_13_samples.png} \\
+        16 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_16_epoch_16_samples.png} \\
+        % 17 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_17_with_16_samples.png} \\
+        % % 19 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_19_epoch_19_samples.png} \\
+        % 20 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_20_epoch_20_samples.png} \\
+        % 22 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_22_epoch_22_samples.png} 
+        % % 19 (Mega variant) & \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_85M_ckpt_epoch_19.png} \\
+        % % 22 (Mega variant) &
+        %  \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_85M_ckpt_epoch_22_with_16_samples.png} \\
+        \hline
+    \end{tabular}
 \end{figure}
+
+    \begin{figure}[H]
+    \centering
+    \caption{Giga 85M samples across selected epochs.}
+    \label{tab:giga_85m_samples_second_half}
+    \renewcommand{\arraystretch}{1} % Reduce row height
+    \setlength{\tabcolsep}{2pt}     % Reduce column padding
+    \begin{tabular}{|p{.3cm}|p{0.44\textwidth}@{}} % Tight Epoch column
+        \rotatebox{90}{\textbf{Epoch}} & \textbf{Sample Image} \\
+        \hline
+        % 1 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_1_epoch_1_samples.png} \\
+        % 4 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_4_epoch_4_samples.png} \\
+        % 5 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_5_with_16_samples.png} \\
+        % 7 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_7_epoch_7_samples.png} \\
+        % 9 & \includegraphics[width=\linewidth]{figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_9.png} \\
+        % 10 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_10_epoch_10_samples.png} \\
+        % 13 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_13_epoch_13_samples.png} \\
+        % 16 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_16_epoch_16_samples.png} \\
+        17 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_17_with_16_samples.png} \\
+        \hline
+        19 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_19_epoch_19_samples.png} 
+         \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_85M_ckpt_epoch_19.png} \\
+        \hline
+        
+        20 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_20_epoch_20_samples.png} \\
+        \hline
+
+        22 & \includegraphics[width=\linewidth]{figures/giga_unet_ddpm_85M_ckpt_epoch_22_epoch_22_samples.png} 
+         \includegraphics[width=\linewidth]{figures/mega_unet_ddpm_85M_ckpt_epoch_22_with_16_samples.png} \\
+        \hline
+    \end{tabular}
+\end{figure}
+
 
 \end{document}
