@@ -1,5 +1,25 @@
-# anime face generator
+# Anime Gace Generator using Diffusion Model.
+For this project we build a generative deep
+learning system that can generate anime faces. The sys-
+tem will be trained on a dataset of anime faces and will
+use denoising diffusion probabilistic models (DDPM) to
+generate new faces. The goal is to create a system that
+can generate acceptable quality anime faces that are di-
+verse and realistic by drawing samples, and naturally for
+denoising by encoding-decoding the image. The project
+will also explore the use of different architectures and the
+impact of self-attention on standard DDPM to improve
+the quality of the generated faces.
+Through this project, we:
+ • Collecte and preprocess over than 80,000 anime
+face images, applying normalization, resizing, and
+few augmentations.
+ • Design and train two distinct deep learning models,
+mainly noise prediction technique and have a quick
+view on score-based energy model, experimenting
+with different architectures and training strategies.
 
+to see the "conference style" report click on the github link.
 <a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
