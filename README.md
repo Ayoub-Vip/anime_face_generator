@@ -23,9 +23,9 @@ Through this project, we:
 - Designed and trained two distinct deep learning models, mainly noise prediction technique and a quick view on score-based energy model, experimenting with different architectures and training strategies.
 
 To see the "conference style" report click on the following GitHub link:  
-<a href="https://github.com/Ayoub-Vip/anime_face_generator/edit/master/reports/report.pdf">https://github.com/Ayoub-Vip/anime_face_generator/edit/master/reports/report.pdf</a>
-
-
+<a href="https://github.com/Ayoub-Vip/anime_face_generator/blob/master/reports/report.pdf">
+ https://github.com/Ayoub-Vip/anime_face_generator/blob/master/reports/report.pdf
+</a>
 
 ## Some Generated Images
 
