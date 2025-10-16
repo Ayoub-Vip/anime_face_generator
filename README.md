@@ -11,20 +11,35 @@ will also explore the use of different architectures and the
 impact of self-attention on standard DDPM to improve
 the quality of the generated faces.
 Through this project, we:
- • Collecte and preprocess over than 80,000 anime
+ - Collecte and preprocess over than 80,000 anime
 face images, applying normalization, resizing, and
 few augmentations.
- • Design and train two distinct deep learning models,
+ - Design and train two distinct deep learning models,
 mainly noise prediction technique and have a quick
 view on score-based energy model, experimenting
 with different architectures and training strategies.
 
-to see the "conference style" report click on the github link.
+
+to see the "conference style" report click on the following github link: <a href="https://github.com/Ayoub-Vip/anime_face_generator/edit/master/reports/report.pdf">https://github.com/Ayoub-Vip/anime_face_generator/edit/master/reports/report.pdf</a>
+
 <a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
-diffusion model to generate anime faces.
+## Some Generated Images
+
+<img src="figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_1_epoch_1_samples.png" />
+<img src="figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_4_epoch_4_samples.png" />
+<img src="figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_5_with_16_samples.png" />
+<img src="figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_7_epoch_7_samples.png" />
+<img src="figures/85M_params_GIGA_DDPM_Unet_ckpt_epoch_9.png" />
+<img src="figures/giga_unet_ddpm_85M_ckpt_epoch_10_epoch_10_samples.png" />
+<img src="figures/giga_unet_ddpm_85M_ckpt_epoch_13_epoch_13_samples.png" />
+<img src="figures/giga_unet_ddpm_85M_ckpt_epoch_16_epoch_16_samples.png" />
+
+
+## Model Architecture
+<img src="https://github.com/Ayoub-Vip/anime_face_generator/edit/master/reports/figures/block_layer.png"/>
 
 ## Project Organization
 
